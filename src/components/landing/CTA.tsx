@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function CTA() {
   const { t } = useI18n();
@@ -19,9 +20,11 @@ export function CTA() {
             <p className="text-primary-foreground/80 mt-4 text-lg max-w-xl mx-auto">
               {t("cta.subtitle")}
             </p>
-            <Button variant="gold" size="xl" className="mt-8 group">
-              {t("cta.button")}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <Button asChild variant="gold" size="xl" className="mt-8 group">
+              <Link to="/auth">
+                {t("cta.button")}
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
           </div>
         </div>
