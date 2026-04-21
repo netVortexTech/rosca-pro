@@ -66,12 +66,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
+import { AuthProvider } from "@/lib/auth";
+import { Toaster } from "@/components/ui/sonner";
 
 function RootComponent() {
   return (
     <ThemeProvider>
       <I18nProvider>
-        <Outlet />
+        <AuthProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </AuthProvider>
       </I18nProvider>
     </ThemeProvider>
   );

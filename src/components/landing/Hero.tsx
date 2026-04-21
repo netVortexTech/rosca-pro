@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import heroImg from "@/assets/hero-rosca.jpg";
 
@@ -21,13 +22,17 @@ export function Hero() {
               {t("hero.subtitle")}
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button variant="hero" size="xl" className="group">
-                {t("hero.cta")}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="hero" size="xl" className="group">
+                <Link to="/auth">
+                  {t("hero.cta")}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
-              <Button variant="outline" size="xl">
-                <PlayCircle className="w-4 h-4" />
-                {t("hero.secondary")}
+              <Button asChild variant="outline" size="xl">
+                <a href="#how">
+                  <PlayCircle className="w-4 h-4" />
+                  {t("hero.secondary")}
+                </a>
               </Button>
             </div>
             <div className="flex items-center gap-3 pt-4">
