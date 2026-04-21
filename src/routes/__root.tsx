@@ -64,6 +64,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { ThemeProvider } from "@/lib/theme";
+import { I18nProvider } from "@/lib/i18n";
+
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <ThemeProvider>
+      <I18nProvider>
+        <Outlet />
+      </I18nProvider>
+    </ThemeProvider>
+  );
 }
