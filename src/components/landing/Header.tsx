@@ -37,8 +37,12 @@ export function Header() {
           <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
             {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </Button>
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">{t("nav.signin")}</Button>
-          <Button size="sm" variant="hero">{t("nav.start")}</Button>
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link to="/auth">{t("nav.signin")}</Link>
+          </Button>
+          <Button asChild size="sm" variant="hero">
+            <Link to="/auth">{t("nav.start")}</Link>
+          </Button>
         </div>
       </div>
     </header>
