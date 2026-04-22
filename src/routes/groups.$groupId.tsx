@@ -17,7 +17,7 @@ import {
   Calendar,
   MessageCircle,
   Crown,
-  Mail,
+  Phone,
   Loader2,
   CheckCircle2,
   Clock,
@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { CycleTracker } from "@/components/app/CycleTracker";
 import { InviteLink } from "@/components/app/InviteLink";
+import { normalizePhone, isValidPhone } from "@/lib/phone";
 
 export const Route = createFileRoute("/groups/$groupId")({
   head: () => ({ meta: [{ title: "Chama — ROSCA" }] }),
@@ -49,12 +50,14 @@ type Group = {
   whatsapp_link: string | null;
   status: string;
   created_by: string;
+  invite_code: string;
 };
 
 type Member = {
   id: string;
   user_id: string | null;
-  invited_email: string;
+  invited_email: string | null;
+  invited_phone: string | null;
   invited_name: string | null;
   position: number;
   role: "admin" | "member";
@@ -67,7 +70,7 @@ function GroupDetail() {
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -102,20 +105,29 @@ function GroupDetail() {
       toast.error(`This chama is set for ${group.member_count} members.`);
       return;
     }
+    if (!isValidPhone(invitePhone)) {
+      toast.error("Enter a valid phone number, e.g. 0712345678");
+      return;
+    }
+    if (!inviteName.trim()) {
+      toast.error("Member name is required");
+      return;
+    }
     setAdding(true);
     try {
+      const normPhone = normalizePhone(invitePhone);
       const nextPos = (members.at(-1)?.position ?? 0) + 1;
       const { error } = await supabase.from("group_members").insert({
         group_id: group.id,
-        invited_email: inviteEmail.trim().toLowerCase(),
-        invited_name: inviteName.trim() || null,
+        invited_phone: normPhone,
+        invited_name: inviteName.trim(),
         position: nextPos,
         role: "member",
         status: "pending",
       });
       if (error) throw error;
-      toast.success("Invite added. They'll join when they sign up with this email.");
-      setInviteEmail("");
+      toast.success("Member invited. Share the invite code so they can finish signup.");
+      setInvitePhone("");
       setInviteName("");
       await load();
     } catch (err: any) {
@@ -130,7 +142,7 @@ function GroupDetail() {
       toast.error("You can't remove the group creator.");
       return;
     }
-    if (!confirm(`Remove ${m.invited_name ?? m.invited_email}?`)) return;
+    if (!confirm(`Remove ${m.invited_name ?? m.invited_phone ?? m.invited_email}?`)) return;
     const { error } = await supabase.from("group_members").delete().eq("id", m.id);
     if (error) toast.error(error.message);
     else {
