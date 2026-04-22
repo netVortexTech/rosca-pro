@@ -251,7 +251,7 @@ function GroupDetail() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium truncate">
-                      {m.invited_name ?? m.invited_email}
+                      {m.invited_name ?? m.invited_phone ?? m.invited_email ?? "—"}
                     </p>
                     {m.role === "admin" && (
                       <span className="inline-flex items-center gap-1 text-xs text-gold-foreground bg-gold/20 px-1.5 py-0.5 rounded">
@@ -268,7 +268,9 @@ function GroupDetail() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{m.invited_email}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {m.invited_phone ?? m.invited_email ?? ""}
+                  </p>
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-1 shrink-0">
@@ -315,6 +317,7 @@ function GroupDetail() {
           members={members.map((m) => ({
             id: m.id,
             invited_email: m.invited_email,
+            invited_phone: m.invited_phone,
             invited_name: m.invited_name,
             position: m.position,
             status: m.status,
@@ -328,7 +331,7 @@ function GroupDetail() {
       </div>
 
       {/* Invite link */}
-      {isAdmin && <InviteLink groupId={group.id} />}
+      {isAdmin && <InviteLink inviteCode={group.invite_code} />}
 
       {/* Invite form */}
       {isAdmin && remaining > 0 && (
@@ -337,32 +340,35 @@ function GroupDetail() {
             <UserPlus className="w-5 h-5" /> Invite a member
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Enter their email. They'll join automatically when they sign up with the same email.
+            Add their phone number and name. They'll join automatically when they sign up with the
+            same phone using the invite code above.
             ({remaining} slot{remaining === 1 ? "" : "s"} remaining)
           </p>
           <form onSubmit={addMember} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="iemail" className="text-xs">Email</Label>
+              <Label htmlFor="iphone" className="text-xs">Phone number</Label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="iemail"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  id="iphone"
+                  type="tel"
+                  inputMode="tel"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value)}
                   required
                   className="pl-9"
-                  placeholder="member@example.com"
+                  placeholder="0712 345 678"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="iname" className="text-xs">Name (optional)</Label>
+              <Label htmlFor="iname" className="text-xs">Name</Label>
               <Input
                 id="iname"
                 value={inviteName}
                 onChange={(e) => setInviteName(e.target.value)}
                 placeholder="Jane Doe"
+                required
               />
             </div>
             <div className="flex items-end">
