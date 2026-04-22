@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JoinGroupIdRouteImport } from './routes/join.$groupId'
 import { Route as GroupsNewRouteImport } from './routes/groups.new'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups.$groupId'
 
@@ -28,6 +29,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinGroupIdRoute = JoinGroupIdRouteImport.update({
+  id: '/join/$groupId',
+  path: '/join/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GroupsNewRoute = GroupsNewRouteImport.update({
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
+  '/join/$groupId': typeof JoinGroupIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
+  '/join/$groupId': typeof JoinGroupIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,12 +70,25 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/groups/new': typeof GroupsNewRoute
+  '/join/$groupId': typeof JoinGroupIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/groups/$groupId' | '/groups/new'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/groups/$groupId'
+    | '/groups/new'
+    | '/join/$groupId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/groups/$groupId' | '/groups/new'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/groups/$groupId'
+    | '/groups/new'
+    | '/join/$groupId'
   id:
     | '__root__'
     | '/'
@@ -75,6 +96,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/groups/$groupId'
     | '/groups/new'
+    | '/join/$groupId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +105,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   GroupsNewRoute: typeof GroupsNewRoute
+  JoinGroupIdRoute: typeof JoinGroupIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -108,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$groupId': {
+      id: '/join/$groupId'
+      path: '/join/$groupId'
+      fullPath: '/join/$groupId'
+      preLoaderRoute: typeof JoinGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/groups/new': {
       id: '/groups/new'
       path: '/groups/new'
@@ -131,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   GroupsNewRoute: GroupsNewRoute,
+  JoinGroupIdRoute: JoinGroupIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
