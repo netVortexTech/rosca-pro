@@ -23,6 +23,8 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CycleTracker } from "@/components/app/CycleTracker";
+import { InviteLink } from "@/components/app/InviteLink";
 
 export const Route = createFileRoute("/groups/$groupId")({
   head: () => ({ meta: [{ title: "Chama — ROSCA" }] }),
@@ -292,6 +294,29 @@ function GroupDetail() {
           </ul>
         )}
       </div>
+
+      {/* Cycle tracking */}
+      <div className="mb-6">
+        <CycleTracker
+          groupId={group.id}
+          isAdmin={isAdmin}
+          members={members.map((m) => ({
+            id: m.id,
+            invited_email: m.invited_email,
+            invited_name: m.invited_name,
+            position: m.position,
+            status: m.status,
+          }))}
+          contributionAmount={group.contribution_amount}
+          currency={group.currency}
+          memberCount={group.member_count}
+          currentCycleNumber={group.current_cycle}
+          startMonth={group.start_month}
+        />
+      </div>
+
+      {/* Invite link */}
+      {isAdmin && <InviteLink groupId={group.id} />}
 
       {/* Invite form */}
       {isAdmin && remaining > 0 && (
