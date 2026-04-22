@@ -61,11 +61,16 @@ function NewGroup() {
       if (gErr) throw gErr;
 
       // Add the creator as the first admin member
+      const creatorPhone =
+        (user.user_metadata as any)?.phone ?? user.phone ?? null;
+      const creatorName =
+        (user.user_metadata as any)?.display_name ?? user.email ?? "Admin";
       const { error: mErr } = await supabase.from("group_members").insert({
         group_id: group.id,
         user_id: user.id,
-        invited_email: user.email!,
-        invited_name: user.user_metadata?.display_name ?? user.email,
+        invited_phone: creatorPhone,
+        invited_email: user.email ?? null,
+        invited_name: creatorName,
         position: 1,
         role: "admin",
         status: "active",
