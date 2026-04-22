@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Calendar, Wallet, ArrowRight } from "lucide-react";
+import { MyStatus } from "@/components/app/MyStatus";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — ROSCA" }] }),
@@ -68,6 +69,8 @@ function Dashboard() {
           </Link>
         </Button>
       </div>
+
+      <MyStatus />
 
       {loading ? (
         <p className="text-muted-foreground">Loading your groups…</p>
