@@ -17,7 +17,7 @@ import {
   Calendar,
   MessageCircle,
   Crown,
-  Mail,
+  Phone,
   Loader2,
   CheckCircle2,
   Clock,
@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { CycleTracker } from "@/components/app/CycleTracker";
 import { InviteLink } from "@/components/app/InviteLink";
+import { normalizePhone, isValidPhone } from "@/lib/phone";
 
 export const Route = createFileRoute("/groups/$groupId")({
   head: () => ({ meta: [{ title: "Chama — ROSCA" }] }),
@@ -49,12 +50,14 @@ type Group = {
   whatsapp_link: string | null;
   status: string;
   created_by: string;
+  invite_code: string;
 };
 
 type Member = {
   id: string;
   user_id: string | null;
-  invited_email: string;
+  invited_email: string | null;
+  invited_phone: string | null;
   invited_name: string | null;
   position: number;
   role: "admin" | "member";
@@ -67,7 +70,7 @@ function GroupDetail() {
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -102,20 +105,29 @@ function GroupDetail() {
       toast.error(`This chama is set for ${group.member_count} members.`);
       return;
     }
+    if (!isValidPhone(invitePhone)) {
+      toast.error("Enter a valid phone number, e.g. 0712345678");
+      return;
+    }
+    if (!inviteName.trim()) {
+      toast.error("Member name is required");
+      return;
+    }
     setAdding(true);
     try {
+      const normPhone = normalizePhone(invitePhone);
       const nextPos = (members.at(-1)?.position ?? 0) + 1;
       const { error } = await supabase.from("group_members").insert({
         group_id: group.id,
-        invited_email: inviteEmail.trim().toLowerCase(),
-        invited_name: inviteName.trim() || null,
+        invited_phone: normPhone,
+        invited_name: inviteName.trim(),
         position: nextPos,
         role: "member",
         status: "pending",
       });
       if (error) throw error;
-      toast.success("Invite added. They'll join when they sign up with this email.");
-      setInviteEmail("");
+      toast.success("Member invited. Share the invite code so they can finish signup.");
+      setInvitePhone("");
       setInviteName("");
       await load();
     } catch (err: any) {
@@ -130,7 +142,7 @@ function GroupDetail() {
       toast.error("You can't remove the group creator.");
       return;
     }
-    if (!confirm(`Remove ${m.invited_name ?? m.invited_email}?`)) return;
+    if (!confirm(`Remove ${m.invited_name ?? m.invited_phone ?? m.invited_email}?`)) return;
     const { error } = await supabase.from("group_members").delete().eq("id", m.id);
     if (error) toast.error(error.message);
     else {
@@ -239,7 +251,7 @@ function GroupDetail() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium truncate">
-                      {m.invited_name ?? m.invited_email}
+                      {m.invited_name ?? m.invited_phone ?? m.invited_email ?? "—"}
                     </p>
                     {m.role === "admin" && (
                       <span className="inline-flex items-center gap-1 text-xs text-gold-foreground bg-gold/20 px-1.5 py-0.5 rounded">
@@ -256,7 +268,9 @@ function GroupDetail() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{m.invited_email}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {m.invited_phone ?? m.invited_email ?? ""}
+                  </p>
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-1 shrink-0">
@@ -303,6 +317,7 @@ function GroupDetail() {
           members={members.map((m) => ({
             id: m.id,
             invited_email: m.invited_email,
+            invited_phone: m.invited_phone,
             invited_name: m.invited_name,
             position: m.position,
             status: m.status,
@@ -316,7 +331,7 @@ function GroupDetail() {
       </div>
 
       {/* Invite link */}
-      {isAdmin && <InviteLink groupId={group.id} />}
+      {isAdmin && <InviteLink inviteCode={group.invite_code} />}
 
       {/* Invite form */}
       {isAdmin && remaining > 0 && (
@@ -325,32 +340,35 @@ function GroupDetail() {
             <UserPlus className="w-5 h-5" /> Invite a member
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Enter their email. They'll join automatically when they sign up with the same email.
+            Add their phone number and name. They'll join automatically when they sign up with the
+            same phone using the invite code above.
             ({remaining} slot{remaining === 1 ? "" : "s"} remaining)
           </p>
           <form onSubmit={addMember} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="iemail" className="text-xs">Email</Label>
+              <Label htmlFor="iphone" className="text-xs">Phone number</Label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="iemail"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  id="iphone"
+                  type="tel"
+                  inputMode="tel"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value)}
                   required
                   className="pl-9"
-                  placeholder="member@example.com"
+                  placeholder="0712 345 678"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="iname" className="text-xs">Name (optional)</Label>
+              <Label htmlFor="iname" className="text-xs">Name</Label>
               <Input
                 id="iname"
                 value={inviteName}
                 onChange={(e) => setInviteName(e.target.value)}
                 placeholder="Jane Doe"
+                required
               />
             </div>
             <div className="flex items-end">

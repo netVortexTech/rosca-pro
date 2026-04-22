@@ -127,8 +127,9 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
-          invited_email: string
+          invited_email: string | null
           invited_name: string | null
+          invited_phone: string | null
           joined_at: string | null
           position: number
           role: Database["public"]["Enums"]["group_member_role"]
@@ -139,8 +140,9 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
-          invited_email: string
+          invited_email?: string | null
           invited_name?: string | null
+          invited_phone?: string | null
           joined_at?: string | null
           position: number
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -151,8 +153,9 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
-          invited_email?: string
+          invited_email?: string | null
           invited_name?: string | null
+          invited_phone?: string | null
           joined_at?: string | null
           position?: number
           role?: Database["public"]["Enums"]["group_member_role"]
@@ -171,6 +174,7 @@ export type Database = {
       }
       groups: {
         Row: {
+          admin_phone: string | null
           contribution_amount: number
           created_at: string
           created_by: string
@@ -178,6 +182,7 @@ export type Database = {
           current_cycle: number
           description: string | null
           id: string
+          invite_code: string
           member_count: number
           name: string
           start_month: string
@@ -186,6 +191,7 @@ export type Database = {
           whatsapp_link: string | null
         }
         Insert: {
+          admin_phone?: string | null
           contribution_amount: number
           created_at?: string
           created_by: string
@@ -193,6 +199,7 @@ export type Database = {
           current_cycle?: number
           description?: string | null
           id?: string
+          invite_code?: string
           member_count: number
           name: string
           start_month: string
@@ -201,6 +208,7 @@ export type Database = {
           whatsapp_link?: string | null
         }
         Update: {
+          admin_phone?: string | null
           contribution_amount?: number
           created_at?: string
           created_by?: string
@@ -208,6 +216,7 @@ export type Database = {
           current_cycle?: number
           description?: string | null
           id?: string
+          invite_code?: string
           member_count?: number
           name?: string
           start_month?: string
@@ -340,6 +349,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_invite_by_code: { Args: { _code: string }; Returns: string }
+      generate_invite_code: { Args: never; Returns: string }
+      get_group_by_invite_code: {
+        Args: { _code: string }
+        Returns: {
+          contribution_amount: number
+          currency: string
+          current_cycle: number
+          description: string
+          id: string
+          invite_code: string
+          member_count: number
+          name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -7,7 +7,8 @@ import { toast } from "sonner";
 
 type Member = {
   id: string;
-  invited_email: string;
+  invited_email: string | null;
+  invited_phone?: string | null;
   invited_name: string | null;
   position: number;
   status: string;
