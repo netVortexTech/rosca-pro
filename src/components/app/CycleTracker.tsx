@@ -203,6 +203,19 @@ export function CycleTracker({
     }
   };
 
+  const reversePayout = async () => {
+    if (!payout) return;
+    const { error } = await supabase
+      .from("payouts")
+      .update({ status: "pending", paid_at: null })
+      .eq("id", payout.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Payout reversed to pending.");
+      load();
+    }
+  };
+
   const memberById = (id: string) => members.find((m) => m.id === id);
   const paidCount = contribs.filter((c) => c.status === "paid").length;
   const pool = contribs.reduce((s, c) => s + Number(c.paid_amount ?? 0), 0);
