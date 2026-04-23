@@ -371,6 +371,28 @@ export function CycleTracker({
             </div>
           )}
 
+          {/* Bulk WhatsApp actions */}
+          {isAdmin && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={remindAllUnpaid}
+                disabled={contribs.every((c) => c.status === "paid")}
+              >
+                <MessageCircle className="w-4 h-4" /> Remind all unpaid
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={congratsAllPaid}
+                disabled={paidCount === 0}
+              >
+                <MessageCircle className="w-4 h-4" /> Congratulate all paid
+              </Button>
+            </div>
+          )}
+
           {/* Contributions list */}
           <ul className="divide-y divide-border">
             {contribs
@@ -379,6 +401,10 @@ export function CycleTracker({
               .map((c) => {
                 const m = memberById(c.member_id);
                 const paid = c.status === "paid";
+                const text = paid
+                  ? congratsText(m?.invited_name ?? "mwanachama")
+                  : reminderText(m?.invited_name ?? "mwanachama");
+                const wa = waLink(m?.invited_phone, text);
                 return (
                   <li key={c.id} className="flex items-center gap-3 py-3">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center shrink-0">
@@ -399,6 +425,13 @@ export function CycleTracker({
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
                         <Clock className="w-3 h-3" /> pending
                       </span>
+                    )}
+                    {wa && (
+                      <Button asChild size="sm" variant="ghost" title={paid ? "Send congrats on WhatsApp" : "Send reminder on WhatsApp"}>
+                        <a href={wa} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                      </Button>
                     )}
                     {isAdmin && (
                       <Button size="sm" variant={paid ? "ghost" : "hero"} onClick={() => togglePaid(c)}>
