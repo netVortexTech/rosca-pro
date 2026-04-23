@@ -1,0 +1,3 @@
+UPDATE public.groups SET contribution_amount = 200000 WHERE id = 'daa3f80b-20ea-4765-8e71-53b3295518bf';
+UPDATE public.contributions SET amount = 200000 WHERE group_id = 'daa3f80b-20ea-4765-8e71-53b3295518bf';
+UPDATE public.payouts SET amount = 200000 * (SELECT member_count FROM public.groups WHERE id = 'daa3f80b-20ea-4765-8e71-53b3295518bf') WHERE group_id = 'daa3f80b-20ea-4765-8e71-53b3295518bf';

@@ -203,6 +203,19 @@ export function CycleTracker({
     }
   };
 
+  const reversePayout = async () => {
+    if (!payout) return;
+    const { error } = await supabase
+      .from("payouts")
+      .update({ status: "pending", paid_at: null })
+      .eq("id", payout.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Payout reversed to pending.");
+      load();
+    }
+  };
+
   const memberById = (id: string) => members.find((m) => m.id === id);
   const paidCount = contribs.filter((c) => c.status === "paid").length;
   const pool = contribs.reduce((s, c) => s + Number(c.paid_amount ?? 0), 0);
@@ -292,6 +305,11 @@ export function CycleTracker({
               {isAdmin && payout.status === "pending" && (
                 <Button onClick={completePayout} variant="gold" size="sm">
                   Mark paid out <ArrowRight className="w-4 h-4" />
+                </Button>
+              )}
+              {isAdmin && payout.status === "completed" && (
+                <Button onClick={reversePayout} variant="outline" size="sm">
+                  Undo paid out
                 </Button>
               )}
             </div>
