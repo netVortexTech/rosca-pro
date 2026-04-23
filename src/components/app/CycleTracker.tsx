@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type Member = {
