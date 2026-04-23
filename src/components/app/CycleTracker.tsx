@@ -307,6 +307,11 @@ export function CycleTracker({
                   Mark paid out <ArrowRight className="w-4 h-4" />
                 </Button>
               )}
+              {isAdmin && payout.status === "completed" && (
+                <Button onClick={reversePayout} variant="outline" size="sm">
+                  Undo paid out
+                </Button>
+              )}
             </div>
           )}
 
