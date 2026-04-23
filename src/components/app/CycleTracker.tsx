@@ -220,6 +220,62 @@ export function CycleTracker({
   const paidCount = contribs.filter((c) => c.status === "paid").length;
   const pool = contribs.reduce((s, c) => s + Number(c.paid_amount ?? 0), 0);
 
+  const waLink = (phone: string | null | undefined, text: string) => {
+    if (!phone) return null;
+    const digits = phone.replace(/\D/g, "");
+    if (!digits) return null;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  };
+
+  const monthName = selectedMonth ? monthLabel(selectedMonth) : "";
+
+  const reminderText = (name: string) =>
+    `Habari ${name}, hii ni kumbusho kuhusu mchango wa ${monthName} (${fmt(contributionAmount)} ${currency}) katika chama chetu. Tafadhali kamilisha mchango wako. Asante!`;
+
+  const congratsText = (name: string) =>
+    `Hongera ${name}! Umekamilisha mchango wako wa ${monthName} (${fmt(contributionAmount)} ${currency}). Asante kwa kuwa mwaminifu kwa chama. 🎉`;
+
+  const openAllWhatsApp = (rows: { phone: string | null | undefined; text: string }[]) => {
+    const links = rows
+      .map((r) => waLink(r.phone, r.text))
+      .filter((u): u is string => !!u);
+    if (links.length === 0) {
+      toast.error("No members with valid phone numbers.");
+      return;
+    }
+    links.forEach((url, i) => {
+      // Stagger window.open so the browser doesn't block them all
+      setTimeout(() => window.open(url, "_blank", "noopener,noreferrer"), i * 350);
+    });
+    toast.success(`Opening WhatsApp for ${links.length} member${links.length === 1 ? "" : "s"}…`);
+  };
+
+  const remindAllUnpaid = () => {
+    const rows = contribs
+      .filter((c) => c.status !== "paid")
+      .map((c) => {
+        const m = memberById(c.member_id);
+        return {
+          phone: m?.invited_phone,
+          text: reminderText(m?.invited_name ?? "mwanachama"),
+        };
+      });
+    openAllWhatsApp(rows);
+  };
+
+  const congratsAllPaid = () => {
+    const rows = contribs
+      .filter((c) => c.status === "paid")
+      .map((c) => {
+        const m = memberById(c.member_id);
+        return {
+          phone: m?.invited_phone,
+          text: congratsText(m?.invited_name ?? "mwanachama"),
+        };
+      });
+    openAllWhatsApp(rows);
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
