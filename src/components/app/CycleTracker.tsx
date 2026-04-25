@@ -516,6 +516,69 @@ export function CycleTracker({
             </div>
           )}
 
+          {/* SMS delivery report */}
+          {smsReport && (
+            <div
+              className={`mb-4 rounded-xl border p-4 ${
+                smsReport.failed === 0
+                  ? "bg-success/5 border-success/30"
+                  : smsReport.sent === 0
+                    ? "bg-destructive/5 border-destructive/30"
+                    : "bg-muted/40 border-border"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-sm font-semibold">
+                    {smsReport.label} · delivery report
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="text-success font-medium">{smsReport.sent} sent</span>
+                    {" · "}
+                    <span className={smsReport.failed > 0 ? "text-destructive font-medium" : ""}>
+                      {smsReport.failed} failed
+                    </span>
+                    {" · "}
+                    {new Date(smsReport.at).toLocaleTimeString()}
+                  </p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setSmsReport(null)}
+                  aria-label="Dismiss report"
+                  className="h-7 w-7"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              {smsReport.results.length > 0 && (
+                <ul className="divide-y divide-border/60 max-h-48 overflow-auto rounded-md bg-background/40">
+                  {smsReport.results.map((r, i) => {
+                    const m = r.member_id ? memberById(r.member_id) : null;
+                    const name = m?.invited_name ?? m?.invited_email ?? r.phone;
+                    return (
+                      <li key={`${r.phone}-${i}`} className="flex items-center gap-2 px-2 py-1.5 text-xs">
+                        {r.status === "sent" ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{name}</span>
+                        <span className="text-muted-foreground shrink-0">{r.phone}</span>
+                        {r.status === "failed" && r.error && (
+                          <span className="text-destructive truncate ml-auto" title={r.error}>
+                            {r.error}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+
           {/* Contributions list */}
           <ul className="divide-y divide-border">
             {contribs
