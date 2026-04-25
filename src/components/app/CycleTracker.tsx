@@ -526,6 +526,18 @@ export function CycleTracker({
                         </a>
                       </Button>
                     )}
+                    {isAdmin && m?.invited_phone && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={sendingSms}
+                        onClick={() => smsOne(c)}
+                        title={paid ? "Send congrats SMS via Briq" : "Send reminder SMS via Briq"}
+                        aria-label="SMS"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    )}
                     {isAdmin && (
                       <Button size="sm" variant={paid ? "ghost" : "hero"} onClick={() => togglePaid(c)}>
                         {paid ? "Undo" : "Mark paid"}
