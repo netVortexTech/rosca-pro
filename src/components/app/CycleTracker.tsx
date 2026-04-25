@@ -280,6 +280,73 @@ export function CycleTracker({
     openAllWhatsApp(rows);
   };
 
+  const sendSmsBatch = async (
+    rows: { phone: string | null | undefined; text: string }[],
+    label: string,
+  ) => {
+    const recipients = rows
+      .filter((r) => !!r.phone)
+      .map((r) => ({ phone: r.phone!, content: r.text }));
+    if (recipients.length === 0) {
+      toast.error("No members with phone numbers.");
+      return;
+    }
+    setSendingSms(true);
+    try {
+      const res = await sendSms({ data: { recipients, groupId } });
+      if (res.error && res.sent === 0) {
+        toast.error(res.error);
+      } else if (res.failed > 0) {
+        toast.warning(
+          `${label}: sent ${res.sent}, failed ${res.failed}${res.error ? ` · ${res.error}` : ""}`,
+        );
+      } else {
+        toast.success(`${label}: SMS sent to ${res.sent} member${res.sent === 1 ? "" : "s"}.`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send SMS");
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
+  const smsRemindUnpaid = () =>
+    sendSmsBatch(
+      contribs
+        .filter((c) => c.status !== "paid")
+        .map((c) => {
+          const m = memberById(c.member_id);
+          return {
+            phone: m?.invited_phone,
+            text: reminderText(m?.invited_name ?? "mwanachama"),
+          };
+        }),
+      "Reminders",
+    );
+
+  const smsCongratsPaid = () =>
+    sendSmsBatch(
+      contribs
+        .filter((c) => c.status === "paid")
+        .map((c) => {
+          const m = memberById(c.member_id);
+          return {
+            phone: m?.invited_phone,
+            text: congratsText(m?.invited_name ?? "mwanachama"),
+          };
+        }),
+      "Congrats",
+    );
+
+  const smsOne = (c: Contribution) => {
+    const m = memberById(c.member_id);
+    const paid = c.status === "paid";
+    const text = paid
+      ? congratsText(m?.invited_name ?? "mwanachama")
+      : reminderText(m?.invited_name ?? "mwanachama");
+    sendSmsBatch([{ phone: m?.invited_phone, text }], paid ? "Congrats" : "Reminder");
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
