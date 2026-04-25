@@ -293,7 +293,12 @@ export function CycleTracker({
     }
     setSendingSms(true);
     try {
-      const res = await sendSms({ data: { recipients, groupId } });
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      const res = await sendSms({
+        data: { recipients, groupId },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.error && res.sent === 0) {
         toast.error(res.error);
       } else if (res.failed > 0) {
