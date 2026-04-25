@@ -80,7 +80,9 @@ export function CycleTracker({
   const [payout, setPayout] = useState<Payout | null>(null);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [sendingSms, setSendingSms] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const sendSms = useServerFn(sendBriqSms);
 
   const load = useCallback(async () => {
     setLoading(true);
