@@ -2,10 +2,18 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle, Send } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle, Send, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { sendBriqSms } from "@/lib/briq.functions";
+import { sendBriqSms, type SmsResult } from "@/lib/briq.functions";
+
+type SmsReport = {
+  label: string;
+  sent: number;
+  failed: number;
+  results: SmsResult[];
+  at: number;
+};
 
 type Member = {
   id: string;
@@ -82,6 +90,7 @@ export function CycleTracker({
   const [seeding, setSeeding] = useState(false);
   const [sendingSms, setSendingSms] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [smsReport, setSmsReport] = useState<SmsReport | null>(null);
   const sendSms = useServerFn(sendBriqSms);
 
   const load = useCallback(async () => {
@@ -281,12 +290,13 @@ export function CycleTracker({
   };
 
   const sendSmsBatch = async (
-    rows: { phone: string | null | undefined; text: string }[],
+    rows: { phone: string | null | undefined; member_id?: string | null; text: string }[],
     label: string,
+    kind: string,
   ) => {
     const recipients = rows
       .filter((r) => !!r.phone)
-      .map((r) => ({ phone: r.phone!, content: r.text }));
+      .map((r) => ({ phone: r.phone!, content: r.text, member_id: r.member_id ?? null }));
     if (recipients.length === 0) {
       toast.error("No members with phone numbers.");
       return;
@@ -296,8 +306,15 @@ export function CycleTracker({
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
       const res = await sendSms({
-        data: { recipients, groupId },
+        data: { recipients, groupId, kind },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      setSmsReport({
+        label,
+        sent: res.sent,
+        failed: res.failed,
+        results: res.results ?? [],
+        at: Date.now(),
       });
       if (res.error && res.sent === 0) {
         toast.error(res.error);
@@ -323,10 +340,12 @@ export function CycleTracker({
           const m = memberById(c.member_id);
           return {
             phone: m?.invited_phone,
+            member_id: c.member_id,
             text: reminderText(m?.invited_name ?? "mwanachama"),
           };
         }),
       "Reminders",
+      "reminder_bulk",
     );
 
   const smsCongratsPaid = () =>
@@ -337,10 +356,12 @@ export function CycleTracker({
           const m = memberById(c.member_id);
           return {
             phone: m?.invited_phone,
+            member_id: c.member_id,
             text: congratsText(m?.invited_name ?? "mwanachama"),
           };
         }),
       "Congrats",
+      "congrats_bulk",
     );
 
   const smsOne = (c: Contribution) => {
@@ -349,7 +370,11 @@ export function CycleTracker({
     const text = paid
       ? congratsText(m?.invited_name ?? "mwanachama")
       : reminderText(m?.invited_name ?? "mwanachama");
-    sendSmsBatch([{ phone: m?.invited_phone, text }], paid ? "Congrats" : "Reminder");
+    sendSmsBatch(
+      [{ phone: m?.invited_phone, member_id: c.member_id, text }],
+      paid ? "Congrats" : "Reminder",
+      paid ? "congrats_one" : "reminder_one",
+    );
   };
 
   return (
@@ -488,6 +513,69 @@ export function CycleTracker({
                   SMS: congrats paid
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* SMS delivery report */}
+          {smsReport && (
+            <div
+              className={`mb-4 rounded-xl border p-4 ${
+                smsReport.failed === 0
+                  ? "bg-success/5 border-success/30"
+                  : smsReport.sent === 0
+                    ? "bg-destructive/5 border-destructive/30"
+                    : "bg-muted/40 border-border"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-sm font-semibold">
+                    {smsReport.label} · delivery report
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="text-success font-medium">{smsReport.sent} sent</span>
+                    {" · "}
+                    <span className={smsReport.failed > 0 ? "text-destructive font-medium" : ""}>
+                      {smsReport.failed} failed
+                    </span>
+                    {" · "}
+                    {new Date(smsReport.at).toLocaleTimeString()}
+                  </p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setSmsReport(null)}
+                  aria-label="Dismiss report"
+                  className="h-7 w-7"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              {smsReport.results.length > 0 && (
+                <ul className="divide-y divide-border/60 max-h-48 overflow-auto rounded-md bg-background/40">
+                  {smsReport.results.map((r, i) => {
+                    const m = r.member_id ? memberById(r.member_id) : null;
+                    const name = m?.invited_name ?? m?.invited_email ?? r.phone;
+                    return (
+                      <li key={`${r.phone}-${i}`} className="flex items-center gap-2 px-2 py-1.5 text-xs">
+                        {r.status === "sent" ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{name}</span>
+                        <span className="text-muted-foreground shrink-0">{r.phone}</span>
+                        {r.status === "failed" && r.error && (
+                          <span className="text-destructive truncate ml-auto" title={r.error}>
+                            {r.error}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
 

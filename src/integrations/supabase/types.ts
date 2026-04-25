@@ -323,6 +323,51 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_messages: {
+        Row: {
+          content: string
+          created_at: string
+          error: string | null
+          group_id: string
+          id: string
+          kind: string | null
+          member_id: string | null
+          phone: string
+          provider_response: Json | null
+          sender_id: string | null
+          sent_by: string | null
+          status: Database["public"]["Enums"]["sms_status"]
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          error?: string | null
+          group_id: string
+          id?: string
+          kind?: string | null
+          member_id?: string | null
+          phone: string
+          provider_response?: Json | null
+          sender_id?: string | null
+          sent_by?: string | null
+          status: Database["public"]["Enums"]["sms_status"]
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          error?: string | null
+          group_id?: string
+          id?: string
+          kind?: string | null
+          member_id?: string | null
+          phone?: string
+          provider_response?: Json | null
+          sender_id?: string | null
+          sent_by?: string | null
+          status?: Database["public"]["Enums"]["sms_status"]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -389,6 +434,7 @@ export type Database = {
       group_status: "setup" | "active" | "completed" | "paused"
       invite_status: "pending" | "active" | "removed"
       payout_status: "pending" | "completed"
+      sms_status: "sent" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -523,6 +569,7 @@ export const Constants = {
       group_status: ["setup", "active", "completed", "paused"],
       invite_status: ["pending", "active", "removed"],
       payout_status: ["pending", "completed"],
+      sms_status: ["sent", "failed"],
     },
   },
 } as const
