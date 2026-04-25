@@ -2,8 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendBriqSms } from "@/lib/briq.functions";
 
 type Member = {
   id: string;
@@ -78,7 +80,9 @@ export function CycleTracker({
   const [payout, setPayout] = useState<Payout | null>(null);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [sendingSms, setSendingSms] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const sendSms = useServerFn(sendBriqSms);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -276,6 +280,73 @@ export function CycleTracker({
     openAllWhatsApp(rows);
   };
 
+  const sendSmsBatch = async (
+    rows: { phone: string | null | undefined; text: string }[],
+    label: string,
+  ) => {
+    const recipients = rows
+      .filter((r) => !!r.phone)
+      .map((r) => ({ phone: r.phone!, content: r.text }));
+    if (recipients.length === 0) {
+      toast.error("No members with phone numbers.");
+      return;
+    }
+    setSendingSms(true);
+    try {
+      const res = await sendSms({ data: { recipients, groupId } });
+      if (res.error && res.sent === 0) {
+        toast.error(res.error);
+      } else if (res.failed > 0) {
+        toast.warning(
+          `${label}: sent ${res.sent}, failed ${res.failed}${res.error ? ` · ${res.error}` : ""}`,
+        );
+      } else {
+        toast.success(`${label}: SMS sent to ${res.sent} member${res.sent === 1 ? "" : "s"}.`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send SMS");
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
+  const smsRemindUnpaid = () =>
+    sendSmsBatch(
+      contribs
+        .filter((c) => c.status !== "paid")
+        .map((c) => {
+          const m = memberById(c.member_id);
+          return {
+            phone: m?.invited_phone,
+            text: reminderText(m?.invited_name ?? "mwanachama"),
+          };
+        }),
+      "Reminders",
+    );
+
+  const smsCongratsPaid = () =>
+    sendSmsBatch(
+      contribs
+        .filter((c) => c.status === "paid")
+        .map((c) => {
+          const m = memberById(c.member_id);
+          return {
+            phone: m?.invited_phone,
+            text: congratsText(m?.invited_name ?? "mwanachama"),
+          };
+        }),
+      "Congrats",
+    );
+
+  const smsOne = (c: Contribution) => {
+    const m = memberById(c.member_id);
+    const paid = c.status === "paid";
+    const text = paid
+      ? congratsText(m?.invited_name ?? "mwanachama")
+      : reminderText(m?.invited_name ?? "mwanachama");
+    sendSmsBatch([{ phone: m?.invited_phone, text }], paid ? "Congrats" : "Reminder");
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -371,25 +442,47 @@ export function CycleTracker({
             </div>
           )}
 
-          {/* Bulk WhatsApp actions */}
+          {/* Bulk WhatsApp + SMS actions */}
           {isAdmin && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={remindAllUnpaid}
-                disabled={contribs.every((c) => c.status === "paid")}
-              >
-                <MessageCircle className="w-4 h-4" /> Remind all unpaid
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={congratsAllPaid}
-                disabled={paidCount === 0}
-              >
-                <MessageCircle className="w-4 h-4" /> Congratulate all paid
-              </Button>
+            <div className="space-y-2 mb-3">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={remindAllUnpaid}
+                  disabled={contribs.every((c) => c.status === "paid")}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp: remind unpaid
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={congratsAllPaid}
+                  disabled={paidCount === 0}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp: congrats paid
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="hero"
+                  onClick={smsRemindUnpaid}
+                  disabled={sendingSms || contribs.every((c) => c.status === "paid")}
+                >
+                  {sendingSms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  SMS: remind unpaid
+                </Button>
+                <Button
+                  size="sm"
+                  variant="hero"
+                  onClick={smsCongratsPaid}
+                  disabled={sendingSms || paidCount === 0}
+                >
+                  {sendingSms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  SMS: congrats paid
+                </Button>
+              </div>
             </div>
           )}
 
@@ -431,6 +524,18 @@ export function CycleTracker({
                         <a href={wa} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
                           <MessageCircle className="w-4 h-4" />
                         </a>
+                      </Button>
+                    )}
+                    {isAdmin && m?.invited_phone && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={sendingSms}
+                        onClick={() => smsOne(c)}
+                        title={paid ? "Send congrats SMS via Briq" : "Send reminder SMS via Briq"}
+                        aria-label="SMS"
+                      >
+                        <Send className="w-4 h-4" />
                       </Button>
                     )}
                     {isAdmin && (
