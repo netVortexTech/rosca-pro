@@ -2,10 +2,18 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle, Send } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, ArrowRight, Trophy, MessageCircle, Send, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { sendBriqSms } from "@/lib/briq.functions";
+import { sendBriqSms, type SmsResult } from "@/lib/briq.functions";
+
+type SmsReport = {
+  label: string;
+  sent: number;
+  failed: number;
+  results: SmsResult[];
+  at: number;
+};
 
 type Member = {
   id: string;
