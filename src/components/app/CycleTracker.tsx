@@ -290,12 +290,13 @@ export function CycleTracker({
   };
 
   const sendSmsBatch = async (
-    rows: { phone: string | null | undefined; text: string }[],
+    rows: { phone: string | null | undefined; member_id?: string | null; text: string }[],
     label: string,
+    kind: string,
   ) => {
     const recipients = rows
       .filter((r) => !!r.phone)
-      .map((r) => ({ phone: r.phone!, content: r.text }));
+      .map((r) => ({ phone: r.phone!, content: r.text, member_id: r.member_id ?? null }));
     if (recipients.length === 0) {
       toast.error("No members with phone numbers.");
       return;
@@ -305,8 +306,15 @@ export function CycleTracker({
       const { data: sess } = await supabase.auth.getSession();
       const token = sess.session?.access_token;
       const res = await sendSms({
-        data: { recipients, groupId },
+        data: { recipients, groupId, kind },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      setSmsReport({
+        label,
+        sent: res.sent,
+        failed: res.failed,
+        results: res.results ?? [],
+        at: Date.now(),
       });
       if (res.error && res.sent === 0) {
         toast.error(res.error);
@@ -332,10 +340,12 @@ export function CycleTracker({
           const m = memberById(c.member_id);
           return {
             phone: m?.invited_phone,
+            member_id: c.member_id,
             text: reminderText(m?.invited_name ?? "mwanachama"),
           };
         }),
       "Reminders",
+      "reminder_bulk",
     );
 
   const smsCongratsPaid = () =>
@@ -346,10 +356,12 @@ export function CycleTracker({
           const m = memberById(c.member_id);
           return {
             phone: m?.invited_phone,
+            member_id: c.member_id,
             text: congratsText(m?.invited_name ?? "mwanachama"),
           };
         }),
       "Congrats",
+      "congrats_bulk",
     );
 
   const smsOne = (c: Contribution) => {
@@ -358,7 +370,11 @@ export function CycleTracker({
     const text = paid
       ? congratsText(m?.invited_name ?? "mwanachama")
       : reminderText(m?.invited_name ?? "mwanachama");
-    sendSmsBatch([{ phone: m?.invited_phone, text }], paid ? "Congrats" : "Reminder");
+    sendSmsBatch(
+      [{ phone: m?.invited_phone, member_id: c.member_id, text }],
+      paid ? "Congrats" : "Reminder",
+      paid ? "congrats_one" : "reminder_one",
+    );
   };
 
   return (
