@@ -442,25 +442,47 @@ export function CycleTracker({
             </div>
           )}
 
-          {/* Bulk WhatsApp actions */}
+          {/* Bulk WhatsApp + SMS actions */}
           {isAdmin && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={remindAllUnpaid}
-                disabled={contribs.every((c) => c.status === "paid")}
-              >
-                <MessageCircle className="w-4 h-4" /> Remind all unpaid
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={congratsAllPaid}
-                disabled={paidCount === 0}
-              >
-                <MessageCircle className="w-4 h-4" /> Congratulate all paid
-              </Button>
+            <div className="space-y-2 mb-3">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={remindAllUnpaid}
+                  disabled={contribs.every((c) => c.status === "paid")}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp: remind unpaid
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={congratsAllPaid}
+                  disabled={paidCount === 0}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp: congrats paid
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="hero"
+                  onClick={smsRemindUnpaid}
+                  disabled={sendingSms || contribs.every((c) => c.status === "paid")}
+                >
+                  {sendingSms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  SMS: remind unpaid
+                </Button>
+                <Button
+                  size="sm"
+                  variant="hero"
+                  onClick={smsCongratsPaid}
+                  disabled={sendingSms || paidCount === 0}
+                >
+                  {sendingSms ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  SMS: congrats paid
+                </Button>
+              </div>
             </div>
           )}
 
