@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const BRIQ_URL = "https://karibu.briq.tz/v1/message/send-instant";
-const SENDER_ID = "MONEY MAKERS";
+// NOTE: Use an approved Briq sender ID. "BRIQ" is the default approved one.
+// Switch to your custom sender (e.g. "MONEY MAKER") once Briq approves it
+// in the dashboard — and make sure the spelling matches EXACTLY.
+const SENDER_ID = "BRIQ";
 
 type Recipient = {
   phone: string;
